@@ -10,12 +10,12 @@ import {
   Hammer,
   ShieldCheck,
   Sparkles,
-  UsersRound,
-  Loader2
+  UsersRound
 } from "lucide-react";
 import { ToastProvider, useToast } from './components/ToastContext';
 import { MetricPanelSkeleton, JobRowSkeleton } from './components/Skeleton';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { JobForm } from './components/JobForm';
 
 type JobState = "Open" | "Active" | "Disputed" | "Completed" | "Refunded";
 
@@ -97,7 +97,7 @@ function formatCurrency(value: number) {
 function AppContent() {
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [creatingJob, setCreatingJob] = useState(false);
+  const [showJobForm, setShowJobForm] = useState(false);
   const { addToast } = useToast();
 
   // Simulate API fetch
@@ -109,29 +109,15 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleCreateJob = async () => {
-    setCreatingJob(true);
-    // Simulate API call
-    setTimeout(() => {
-      const newJob: Job = {
-        id: `OWO-${1000 + Math.floor(Math.random() * 999)}`,
-        customer: "New Customer",
-        artisan: "New Artisan",
-        trade: "General",
-        state: "Open",
-        amount: Math.floor(Math.random() * 500) + 100,
-        started: new Date().toLocaleTimeString(),
-        location: "Lagos",
-        hash: Math.random().toString(36).substring(2, 8)
-      };
-      setJobs(prev => [...prev, newJob]);
-      setCreatingJob(false);
-      addToast({
-        type: "success",
-        message: "Job created successfully!"
-      });
-    }, 2000);
+  const handleJobSuccess = (jobId: string) => {
+    addToast({
+      type: 'success',
+      message: `Job ${jobId} created successfully!`
+    });
   };
+
+  const handleOpenJobForm = () => setShowJobForm(true);
+  const handleCloseJobForm = () => setShowJobForm(false);
 
   const simulateError = () => {
     addToast({
@@ -182,17 +168,12 @@ function AppContent() {
             <button className="ghost-action" onClick={simulateError}>
               Test Error
             </button>
-            <button 
-              className="primary-action" 
-              onClick={handleCreateJob}
-              disabled={creatingJob}
+            <button
+              className="primary-action"
+              onClick={handleOpenJobForm}
             >
-              {creatingJob ? (
-                <Loader2 size={18} className="loading-spinner" />
-              ) : (
-                <Sparkles size={18} />
-              )}
-              {creatingJob ? "Creating..." : "New job"}
+              <Sparkles size={18} />
+              New job
             </button>
           </div>
         </header>
@@ -318,6 +299,15 @@ function AppContent() {
           </aside>
         </section>
       </section>
+
+      {/* Job creation form modal */}
+      {showJobForm && (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Create new job">
+          <div className="modal-body">
+            <JobForm onCancel={handleCloseJobForm} onSuccess={handleJobSuccess} />
+          </div>
+        </div>
+      )}
     </main>
   );
 }
